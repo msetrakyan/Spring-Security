@@ -1,4 +1,4 @@
-package com.example.Security.controller;
+package com.example.security.controller;
 
 
 import org.springframework.web.bind.annotation.*;
@@ -11,7 +11,7 @@ public class AuthController {
 
 
 
-    @PostMapping(path = "/register")
+    @GetMapping(path = "/register")
     @PermitAll
     public String register() {
         return "REGISTER METHOD OF AUTH CONTROLLER";
@@ -19,7 +19,7 @@ public class AuthController {
 
 
 
-    @PostMapping(path = "/login")
+    @GetMapping(path = "/login")
     @PermitAll
     public String login() {
         return "LOGIN METHOD OF AUTH CONTROLLER";

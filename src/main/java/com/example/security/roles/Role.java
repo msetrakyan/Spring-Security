@@ -1,7 +1,6 @@
-package com.example.Security.roles;
+package com.example.security.roles;
 
 import lombok.Getter;
-import lombok.Setter;
 
 @Getter
 public enum Role {

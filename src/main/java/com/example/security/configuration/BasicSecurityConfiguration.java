@@ -1,9 +1,13 @@
-package com.example.Security.configuration;
+package com.example.security.configuration;
 
 
-import com.example.Security.roles.Role;
+import com.example.security.auth.MyUserDetailsService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -15,8 +19,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
-import static com.example.Security.roles.Role.ADMIN;
-import static com.example.Security.roles.Role.USER;
+import static com.example.security.roles.Role.ADMIN;
+import static com.example.security.roles.Role.USER;
 
 @Configuration
 @EnableWebSecurity
@@ -24,7 +28,11 @@ import static com.example.Security.roles.Role.USER;
         prePostEnabled = true,
         securedEnabled = true,
         jsr250Enabled = true)
+@RequiredArgsConstructor
 public class BasicSecurityConfiguration {
+
+    private final MyUserDetailsService myUserDetailsService;
+
 
 
     @Bean
@@ -34,43 +42,32 @@ public class BasicSecurityConfiguration {
 
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http.csrf().disable()
                 .authorizeRequests()
-//                .antMatchers("/auth/register").permitAll()
-//                .antMatchers("/auth/login").permitAll()
-//                .antMatchers("/string/get").hasRole(USER.getName())
-//                .antMatchers("/string/post").hasRole(ADMIN.getName())
                 .anyRequest()
                 .authenticated()
                 .and()
-                .httpBasic();
+                .formLogin();
 
     return http.getOrBuild();
     }
 
 
+
     @Bean
-    UserDetailsService userDetailsService() {
-
-        UserDetails build = User.builder()
-                .username("anna")
-                .password(passwordEncoder().encode("password"))
-                .roles(USER.getName()) //ROLE_USER
-                .build();
-
-        UserDetails build2 = User.builder()
-                .username("linda")
-                .password(passwordEncoder().encode("password"))
-                .roles(ADMIN.getName()) //ROLE_ADMIN
-                .build();
-
-        return new InMemoryUserDetailsManager(build, build2);
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
     }
 
-
-
+    @Bean
+    public DaoAuthenticationProvider daoAuthenticationProvider() {
+        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
+        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
+        daoAuthenticationProvider.setUserDetailsService(myUserDetailsService);
+        return daoAuthenticationProvider;
+    }
 
 
 
