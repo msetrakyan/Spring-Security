@@ -6,6 +6,7 @@ import com.example.security.repository.UserRepository;
 import com.example.security.roles.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.annotation.PostConstruct;
@@ -22,7 +23,6 @@ public class InitConfig {
     public void init() {
         createRoles();
     }
-
 
 
     private void createRoles() {

@@ -2,6 +2,9 @@ package com.example.security.configuration;
 
 
 import com.example.security.auth.MyUserDetailsService;
+import com.example.security.jwt.JwtAuthEntryPoint;
+import com.example.security.jwt.JwtTokenFilter;
+import com.example.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,16 +14,11 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
-
-import static com.example.security.roles.Role.ADMIN;
-import static com.example.security.roles.Role.USER;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -29,11 +27,10 @@ import static com.example.security.roles.Role.USER;
         securedEnabled = true,
         jsr250Enabled = true)
 @RequiredArgsConstructor
-public class BasicSecurityConfiguration {
+public class SecurityConfiguration {
 
     private final MyUserDetailsService myUserDetailsService;
-
-
+    private final JwtTokenFilter jwtTokenFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -42,16 +39,25 @@ public class BasicSecurityConfiguration {
 
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        http.csrf().disable()
-                .authorizeRequests()
-                .anyRequest()
-                .authenticated()
+        http.httpBasic().disable()
+                .csrf().disable()
+                .cors().disable()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .formLogin();
+                .authorizeHttpRequests()
+                .antMatchers("/auth/register").permitAll()
+                .antMatchers("/auth/login").permitAll()
+                .antMatchers("/string/getForUser").hasRole("USER")
+                .antMatchers("/string/getForAdmin").hasRole("ADMIN")
+                .anyRequest().authenticated()
+                .and()
+                .exceptionHandling().authenticationEntryPoint(new JwtAuthEntryPoint())
+                .and()
+                .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
-    return http.getOrBuild();
+        return http.getOrBuild();
     }
 
 
@@ -68,6 +74,7 @@ public class BasicSecurityConfiguration {
         daoAuthenticationProvider.setUserDetailsService(myUserDetailsService);
         return daoAuthenticationProvider;
     }
+
 
 
 
